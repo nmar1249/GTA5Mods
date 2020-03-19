@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GTA;
-using GTA.Native;
+﻿using GTA;
 using GTA.Math;
-using GTA.NaturalMotion;
 using GTA.UI;
-using System.Windows.Forms; //used to get input
+using System;
 using System.Drawing;
+using System.Windows.Forms; //used to get input
 
 namespace HUDExtended
 {
@@ -28,6 +22,10 @@ namespace HUDExtended
             Tick += OnTick;
             KeyDown += OnKeyDown;
             Notification.Show(this.Name + "has launched.");
+
+            //init location info
+            locationInfo = new ContainerElement();
+            targetInfo = new ContainerElement();
         }
 
         //event runs every tick interval (set as MS)
@@ -42,7 +40,8 @@ namespace HUDExtended
             //show details of targeted NPC
             if (Game.Player.TargetedEntity != null && Game.Player.TargetedEntity.EntityType == EntityType.Ped)
             {
-                TargetNPC().Draw();
+                GetTargetInfo();
+                targetInfo.Draw();
             }
             
             //show speed if in vehicle
@@ -56,10 +55,21 @@ namespace HUDExtended
         #endregion
 
         #region container methods
+
         void GetLocationInfo()
         {
-            locationInfo.Items.Add(Direction());
-            locationInfo.Items.Add(GetStreet(Game.Player.Character.Position));
+            locationInfo.Items.Clear();
+
+            locationInfo.Items.Insert(0, Direction());
+            locationInfo.Items.Insert(1, GetStreet(Game.Player.Character.Position));
+        }
+
+        void GetTargetInfo()
+        {
+            targetInfo.Items.Clear();
+
+            targetInfo.Items.Insert(0, GetTargetName());
+            targetInfo.Items.Insert(1, GetHealth());
         }
         #endregion
 
@@ -115,15 +125,13 @@ namespace HUDExtended
         /// always potential for more
         /// </summary>
         /// <returns></returns>
-        TextElement TargetNPC()
+        TextElement GetTargetName()
         {       
             PointF coords = new PointF() { X = 640, Y = 0 };
             Ped npc = (Ped)Game.Player.TargetedEntity;
             Color color = new Color();
 
-            string str = "";
             string name = ((PedHash)npc.Model.Hash).ToString();
-            string health = "";
 
             //get relation between player and targeted ped
             Relationship rel = Game.Player.Character.GetRelationshipWithPed(npc);
@@ -149,18 +157,38 @@ namespace HUDExtended
 
             }
 
+            return new TextElement(name, coords, .5f, color, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Center, false, true);
+
+        }
+
+        TextElement GetHealth()
+        {
+            PointF coords = new PointF() { X = 640, Y = 10 };
+            Ped npc = (Ped)Game.Player.TargetedEntity;
+            Color color = new Color();
+
+            string health = "";
+
             //get health percentage
-            int healthPerc = (npc.Health / npc.MaxHealth) * 100;
-            health = '\n' + healthPerc.ToString() + '%';
+            float healthPerc = (npc.HealthFloat / npc.MaxHealthFloat) * 100;
+            healthPerc = (float)Math.Round(healthPerc, 0);
 
-            str = name + health;
-            return new TextElement(str, coords, .5f, color, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Center, false, true);
+            if (healthPerc == 0)
+            {
+                health = "\nDEAD";
+                color = Color.Red;
+            }
+            else
+            {
+                health = '\n' + healthPerc.ToString() + '%';
+            }
 
+            return new TextElement(health, coords, .5f, color, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Center, false, true);
         }
 
         TextElement GetStreet(Vector3 pos)
         {
-            PointF coords = new PointF() { X = 25, Y = 500 };
+            PointF coords = new PointF() { X = 25, Y = 550 };
             string str = World.GetStreetName(pos);
 
             return new TextElement(str, coords, .5f, Color.White, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Left, false, true);
