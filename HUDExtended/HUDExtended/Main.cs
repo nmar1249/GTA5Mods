@@ -11,19 +11,21 @@ using GTA.UI;
 using System.Windows.Forms; //used to get input
 using System.Drawing;
 
+
 namespace HUDExtended
 {
     public class Main : Script
     {
         public Main()
         {
+            //determines tick rate for script
             Interval = 10;
             Tick += OnTick;
             KeyDown += OnKeyDown;
             Notification.Show(this.Name + "has launched.");
         }
 
-        //event runs every tick
+        //event runs every tick interval (set as MS)
         void OnTick(object sender, EventArgs e)
         {
 
@@ -31,9 +33,12 @@ namespace HUDExtended
             GetDirection().Draw();
 
 
-            //show details of targeted NPC (if aiming)
-            TargetNPC().Draw();
-
+            //show details of targeted NPC
+            if (Game.Player.TargetedEntity != null && Game.Player.TargetedEntity.EntityType == EntityType.Ped)
+            {
+                TargetNPC().Draw();
+            }
+            
             //show speed if in vehicle
         }
 
@@ -70,7 +75,7 @@ namespace HUDExtended
             {
                 direction += "S";
             }
-
+            
             //then x axis
             if(dir.X == 1)
             {
@@ -81,16 +86,60 @@ namespace HUDExtended
                 direction += "E";
             }
 
-            return new TextElement("DIR: " + direction, coords , .5f);
+            //white color, left alignment. shadow = false, outline = true
+            return new TextElement("DIR: " + direction, coords , .5f, Color.White, GTA.UI.Font.ChaletComprimeCologne, GTA.UI.Alignment.Left, false, true);
         }
 
+        /// <summary>
+        /// Displays data about the targeted NPC
+        /// --------------------------
+        /// Name:
+        /// Health:
+        /// Relationship:
+        /// -------------------------
+        /// always potential for more
+        /// </summary>
+        /// <returns></returns>
         TextElement TargetNPC()
-        {
-            PointF coords = new PointF() { X = 50, Y = 600 };
-            Entity npc = Game.Player.TargetedEntity;
+        {       
+            PointF coords = new PointF() { X = 640, Y = 0 };
+            Ped npc = (Ped)Game.Player.TargetedEntity;
+            Color color = new Color();
 
-            Notification.Show("targetNPC reached DEBUG");
-            return new TextElement(npc.Handle.ToString(), coords, .5f);
+            string str = "";
+            string name = ((PedHash)npc.Model.Hash).ToString();
+            string health = "";
+            //get relation between player and targeted ped
+            Relationship rel = Game.Player.Character.GetRelationshipWithPed(npc);
+            
+            switch(rel)
+            {
+                case Relationship.Respect:
+                case Relationship.Like:
+                case Relationship.Companion:
+                    color = Color.Green;
+                    break;
+                case Relationship.Dislike:
+                    color = Color.LightPink;
+                    break;
+                case Relationship.Hate:
+                    color = Color.Red;
+                    break;
+                case Relationship.Neutral:
+                case Relationship.Pedestrians:
+                    color = Color.White;
+                    break;
+
+            }
+
+            //get health
+            health = '\n' + npc.Health.ToString();
+
+            //combine into single string 
+            str = name + health;
+            return new TextElement(str, coords, .5f, color, GTA.UI.Font.Monospace, GTA.UI.Alignment.Center, false, true);
+
         }
-    }
+
+    } 
 }
