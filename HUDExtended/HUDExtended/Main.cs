@@ -129,41 +129,20 @@ namespace HUDExtended
         {       
             PointF coords = new PointF() { X = 640, Y = 0 };
             Ped npc = (Ped)Game.Player.TargetedEntity;
-            Color color = new Color();
 
             string name = ((PedHash)npc.Model.Hash).ToString();
 
             //get relation between player and targeted ped
             Relationship rel = Game.Player.Character.GetRelationshipWithPed(npc);
             
-            //use relationship to determine text color
-            switch(rel)
-            {
-                case Relationship.Respect:
-                case Relationship.Like:
-                case Relationship.Companion:
-                    color = Color.Green;
-                    break;
-                case Relationship.Dislike:
-                    color = Color.LightPink;
-                    break;
-                case Relationship.Hate:
-                    color = Color.Red;
-                    break;
-                case Relationship.Neutral:
-                case Relationship.Pedestrians:
-                    color = Color.White;
-                    break;
 
-            }
-
-            return new TextElement(name, coords, .5f, color, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Center, false, true);
+            return new TextElement(name, coords, .5f, Color.White, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Center, false, true);
 
         }
 
         TextElement GetHealth()
         {
-            PointF coords = new PointF() { X = 640, Y = 10 };
+            PointF coords = new PointF() { X = 640, Y = 20 };
             Ped npc = (Ped)Game.Player.TargetedEntity;
             Color color = new Color();
 
@@ -173,16 +152,37 @@ namespace HUDExtended
             float healthPerc = (npc.HealthFloat / npc.MaxHealthFloat) * 100;
             healthPerc = (float)Math.Round(healthPerc, 0);
 
-            if (healthPerc == 0)
+            //between 0 and 15
+            if (healthPerc >= 0 && healthPerc < 20)
             {
-                health = "\nDEAD";
+                health = "DEAD";
                 color = Color.Red;
             }
-            else
+            else if(healthPerc >= 20 && healthPerc < 40)
             {
-                health = '\n' + healthPerc.ToString() + '%';
+                color = Color.OrangeRed;
+                health = healthPerc.ToString() + "%";
             }
-
+            else if(healthPerc >= 40 && healthPerc < 60)
+            {
+                color = Color.Orange;
+                health = healthPerc.ToString() + "%";
+            }
+            else if(healthPerc >= 60 && healthPerc < 80)
+            {
+                color = Color.Yellow;
+                health = healthPerc.ToString() + "%";
+            }
+            else if(healthPerc >= 80 && healthPerc < 100)
+            {
+                color = Color.GreenYellow;
+                health = healthPerc.ToString() + "%";
+            }
+            else if(healthPerc == 100)
+            {
+                color = Color.LightGreen;
+                health = healthPerc.ToString() + "%";
+            }
             return new TextElement(health, coords, .5f, color, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Center, false, true);
         }
 
