@@ -11,11 +11,16 @@ using GTA.UI;
 using System.Windows.Forms; //used to get input
 using System.Drawing;
 
-
 namespace HUDExtended
 {
     public class Main : Script
     {
+
+        ContainerElement locationInfo;
+        ContainerElement targetInfo;
+
+        #region main methods
+
         public Main()
         {
             //determines tick rate for script
@@ -30,7 +35,8 @@ namespace HUDExtended
         {
 
             //update current direction
-            GetDirection().Draw();
+            GetLocationInfo();
+            locationInfo.Draw();
 
 
             //show details of targeted NPC
@@ -45,17 +51,26 @@ namespace HUDExtended
         //event triggered when any key is pressed
         void OnKeyDown(object sender, KeyEventArgs e)
         {
-
         }
 
-        TextElement GetDirection()
+        #endregion
+
+        #region container methods
+        void GetLocationInfo()
+        {
+            locationInfo.Items.Add(Direction());
+            locationInfo.Items.Add(GetStreet(Game.Player.Character.Position));
+        }
+        #endregion
+
+        #region helper methods
+
+        TextElement Direction()
         {
             PointF coords = new PointF() { X = 25, Y = 500 };
             string direction = "";
 
-            var pos = Game.Player.Character.Position;
-            var forward = Game.Player.Character.ForwardVector;
-            var dir = forward;
+            var dir = Game.Player.Character.ForwardVector;
 
             //set to direction vector by normalizing and rounding 
             dir.Normalize(); 
@@ -87,7 +102,7 @@ namespace HUDExtended
             }
 
             //white color, left alignment. shadow = false, outline = true
-            return new TextElement("DIR: " + direction, coords , .5f, Color.White, GTA.UI.Font.ChaletComprimeCologne, GTA.UI.Alignment.Left, false, true);
+            return new TextElement("DIR: " + direction, coords , .5f, Color.White, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Left, false, true);
         }
 
         /// <summary>
@@ -109,9 +124,11 @@ namespace HUDExtended
             string str = "";
             string name = ((PedHash)npc.Model.Hash).ToString();
             string health = "";
+
             //get relation between player and targeted ped
             Relationship rel = Game.Player.Character.GetRelationshipWithPed(npc);
             
+            //use relationship to determine text color
             switch(rel)
             {
                 case Relationship.Respect:
@@ -132,14 +149,22 @@ namespace HUDExtended
 
             }
 
-            //get health
-            health = '\n' + npc.Health.ToString();
+            //get health percentage
+            int healthPerc = (npc.Health / npc.MaxHealth) * 100;
+            health = '\n' + healthPerc.ToString() + '%';
 
-            //combine into single string 
             str = name + health;
-            return new TextElement(str, coords, .5f, color, GTA.UI.Font.Monospace, GTA.UI.Alignment.Center, false, true);
+            return new TextElement(str, coords, .5f, color, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Center, false, true);
 
         }
 
-    } 
+        TextElement GetStreet(Vector3 pos)
+        {
+            PointF coords = new PointF() { X = 25, Y = 500 };
+            string str = World.GetStreetName(pos);
+
+            return new TextElement(str, coords, .5f, Color.White, GTA.UI.Font.Pricedown, GTA.UI.Alignment.Left, false, true);
+        }
+        #endregion
+    }
 }
